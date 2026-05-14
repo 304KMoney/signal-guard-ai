@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { fetchMarketOverview, classifyMarketBias, getHighImpactEventsToday } from '@/lib/market-data'
+import { generateMorningBriefing } from '@/lib/agents/morning-briefing'
 
 const USER_ID = process.env.DEMO_USER_ID ?? 'demo_user_kiel_green'
 
@@ -25,10 +26,13 @@ export async function GET() {
     const { bias, reason, noTradeReasons } = classifyMarketBias(overview)
     const newsEvents = getHighImpactEventsToday()
 
+    // Run Claude agent for intelligent synthesis (falls back to mock if no key)
+    const agentOutput = await generateMorningBriefing(overview, bias, noTradeReasons, 20)
+
     const briefing = await prisma.morningBriefing.create({
       data: {
         userId: USER_ID,
-        marketBias: bias,
+        marketBias: agentOutput.verdict === 'NO_TRADE' ? 'no_trade' : bias,
         biasReason: reason,
         spyChange: overview.spy?.changePercent ?? null,
         qqqChange: overview.qqq?.changePercent ?? null,
@@ -38,12 +42,19 @@ export async function GET() {
         volatilityWarn: (overview.vix ?? 0) > 20,
         highImpactNews: newsEvents,
         noTradeReasons,
-        bestWindow: '10:00 AM \u2013 11:30 AM ET',
-        fullBriefing: `Market briefing for ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}. Bias: ${bias.toUpperCase()}. ${reason}. VIX: ${overview.vix?.toFixed(1) ?? 'N/A'}. Check scanner for qualifying setups (score \u2265 70).`,
+        bestWindow: '10:00 AM – 11:30 AM ET',
+        fullBriefing: [
+          `🧠 SIGNAL GUARD AI — ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`,
+          `Verdict: ${agentOutput.verdict}`,
+          agentOutput.summary,
+          agentOutput.marketContext,
+          agentOutput.keyRisks.length > 0 ? `Key Risks: ${agentOutput.keyRisks.join(' | ')}` : '',
+          agentOutput.rulesReminder,
+        ].filter(Boolean).join('\n'),
       },
     })
 
-    return NextResponse.json({ briefing, fresh: true })
+    return NextResponse.json({ briefing, agentVerdict: agentOutput.verdict, fresh: true })
   } catch (err) {
     console.error('[GET /api/briefing]', err)
     return NextResponse.json({ error: 'Failed to generate briefing' }, { status: 500 })
