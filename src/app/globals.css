@@ -9,31 +9,28 @@
   --brand-white: #F8FAFC;
   --brand-slate: #64748B;
   --brand-gold:  #D4A017;
-
-  /* App uses dark theme by default */
-  --background: 210 50% 10%;    /* Deep Navy base */
-  --foreground: 210 40% 98%;    /* Near-white text */
-  --card: 210 50% 12%;          /* Slightly lighter than bg */
-  --card-foreground: 210 40% 98%;
-  --primary: 174 71% 40%;       /* Teal */
-  --primary-foreground: 0 0% 100%;
-  --secondary: 210 50% 16%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 210 40% 18%;
-  --muted-foreground: 215 20% 55%;
-  --border: 210 40% 20%;
-  --input: 210 40% 16%;
-  --ring: 174 71% 40%;          /* Teal ring */
   --radius: 0.75rem;
 }
 
-@layer base {
-  :root {
-    color-scheme: dark;
-  }
+/* Force dark background on html/body */
+html, body {
+  background-color: #0B1F33;
+  color: #F8FAFC;
+  min-height: 100vh;
 }
 
-@layer base {
-  * { @apply border-border; }
-  body { @apply bg-background text-foreground; }
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B1F33;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E3A5F;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #14B8A6;
 }
