@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function NewTradePage() {
   const router = useRouter();
@@ -267,12 +268,12 @@ export default function NewTradePage() {
           >
             {loading ? "Logging Trade..." : "Log Trade →"}
           </button>
-          <a
+          <Link
             href="/dashboard/journal"
             className="btn-secondary text-sm px-6 py-3"
           >
             Cancel
-          </a>
+          </Link>
         </div>
 
         <div className="disclaimer-banner text-center text-xs">

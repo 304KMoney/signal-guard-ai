@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DISCLAIMER } from "@/lib/claude";
+import Link from "next/link";
 
 const QUESTIONS = [
   {
@@ -241,9 +242,9 @@ export default function MorningBriefPage() {
 
           {/* Actions */}
           <div className="flex gap-3">
-            <a href="/dashboard/scanner" className="btn-primary flex-1 text-center text-sm py-2.5">
+            <Link href="/dashboard/scanner" className="btn-primary flex-1 text-center text-sm py-2.5">
               View Signals →
-            </a>
+            </Link>
             <button
               onClick={() => {
                 setResult(null);

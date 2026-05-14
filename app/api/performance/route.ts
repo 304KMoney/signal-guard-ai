@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import type { Trade } from "@prisma/client";
 
 export async function GET() {
   try {
@@ -19,19 +20,19 @@ export async function GET() {
       orderBy: { entryAt: "asc" },
     });
 
-    const wins = trades.filter((t) => (t.pnl?.toNumber() ?? 0) > 0);
-    const losses = trades.filter((t) => (t.pnl?.toNumber() ?? 0) < 0);
-    const totalPnL = trades.reduce((s, t) => s + (t.pnl?.toNumber() ?? 0), 0);
+    const wins = trades.filter((t: Trade) => (t.pnl?.toNumber() ?? 0) > 0);
+    const losses = trades.filter((t: Trade) => (t.pnl?.toNumber() ?? 0) < 0);
+    const totalPnL = trades.reduce((s: number, t: Trade) => s + (t.pnl?.toNumber() ?? 0), 0);
     const winRate = trades.length > 0 ? (wins.length / trades.length) * 100 : 0;
 
     const avgWin =
       wins.length > 0
-        ? wins.reduce((s, t) => s + (t.pnl?.toNumber() ?? 0), 0) / wins.length
+        ? wins.reduce((s: number, t: Trade) => s + (t.pnl?.toNumber() ?? 0), 0) / wins.length
         : 0;
     const avgLoss =
       losses.length > 0
         ? Math.abs(
-            losses.reduce((s, t) => s + (t.pnl?.toNumber() ?? 0), 0) /
+            losses.reduce((s: number, t: Trade) => s + (t.pnl?.toNumber() ?? 0), 0) /
               losses.length
           )
         : 0;
@@ -44,14 +45,14 @@ export async function GET() {
 
     const bestTrade =
       trades.length > 0
-        ? trades.reduce((b, t) =>
+        ? trades.reduce((b: Trade, t: Trade) =>
             (t.pnl?.toNumber() ?? 0) > (b.pnl?.toNumber() ?? -Infinity) ? t : b
           )
         : null;
 
     const worstTrade =
       trades.length > 0
-        ? trades.reduce((w, t) =>
+        ? trades.reduce((w: Trade, t: Trade) =>
             (t.pnl?.toNumber() ?? 0) < (w.pnl?.toNumber() ?? Infinity) ? t : w
           )
         : null;
