@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TradingMode {
+  PAPER
+  LIVE
+}
+
+enum Market {
+  CRYPTO
+  STOCK
+  FUTURES
+}
+
+enum SignalStatus {
+  PENDING
+  APPROVED
+  SKIPPED
+  EXPIRED
+}
+
+enum TradeDirection {
+  LONG
+  SHORT
+}
+
+enum TradeStatus {
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+enum MarketBias {
+  BULLISH
+  BEARISH
+  NEUTRAL
+  NO_TRADE
+}
+
+model User {
+  id                  String      @id @default(cuid())
+  clerkId             String      @unique
+  email               String      @unique
+  accountSize         Decimal     @default(150) @db.Decimal(12, 2)
+  maxDailyLossPct     Decimal     @default(2.0) @db.Decimal(5, 2)
+  maxPositionSizePct  Decimal     @default(10.0) @db.Decimal(5, 2)
+  tradingMode         TradingMode @default(PAPER)
+  anthropicApiKey     String?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  signals       Signal[]
+  trades        Trade[]
+  morningBriefs MorningBrief[]
+  strategies    Strategy[]
+  eodReviews    EODReview[]
+
+  @@map("users")
+}
+
+model Signal {
+  id           String      @id @default(cuid())
+  userId       String
+  ticker       String
+  market       Market
+  signalType   String
+  score        Int
+  entryLow     Decimal     @db.Decimal(12, 4)
+  entryHigh    Decimal     @db.Decimal(12, 4)
+  stopLoss     Decimal     @db.Decimal(12, 4)
+  tp1          Decimal     @db.Decimal(12, 4)
+  tp2          Decimal?    @db.Decimal(12, 4)
+  rrRatio      Decimal     @db.Decimal(6, 2)
+  aiReasoning  String      @db.Text
+  status       SignalStatus @default(PENDING)
+  createdAt    DateTime    @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades Trade[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("signals")
+}
+
+model Trade {
+  id          String         @id @default(cuid())
+  userId      String
+  signalId    String?
+  ticker      String
+  direction   TradeDirection
+  market      Market
+  entryPrice  Decimal        @db.Decimal(12, 4)
+  stopLoss    Decimal        @db.Decimal(12, 4)
+  target      Decimal        @db.Decimal(12, 4)
+  size        Decimal        @db.Decimal(10, 4)
+  mode        TradingMode    @default(PAPER)
+  status      TradeStatus    @default(OPEN)
+  exitPrice   Decimal?       @db.Decimal(12, 4)
+  pnl         Decimal?       @db.Decimal(10, 2)
+  notes       String?        @db.Text
+  entryAt     DateTime       @default(now())
+  exitAt      DateTime?
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  signal     Signal?    @relation(fields: [signalId], references: [id])
+  eodReviews EODReview[]
+
+  @@index([userId])
+  @@index([entryAt])
+  @@map("trades")
+}
+
+model MorningBrief {
+  id             String     @id @default(cuid())
+  userId         String
+  checkInAnswers Json
+  aiNarrative    String     @db.Text
+  marketBias     MarketBias @default(NEUTRAL)
+  createdAt      DateTime   @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("morning_briefs")
+}
+
+model Strategy {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String   @db.Text
+  rules       Json
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("strategies")
+}
+
+model EODReview {
+  id              String   @id @default(cuid())
+  userId          String
+  tradeId         String
+  aiNarrative     String   @db.Text
+  lessonsLearned  String   @db.Text
+  createdAt       DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trade Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("eod_reviews")
+}
