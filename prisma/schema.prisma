@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserSettings {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  tradingMode    String   @default("paper")
+  accountSize    Decimal  @default(20.00)
+  paperSize      Decimal  @default(500.00)
+  maxRiskPct     Decimal  @default(0.01)
+  maxTradesDay   Int      @default(2)
+  maxLossDay     Decimal  @default(25.00)
+  allowFutures   Boolean  @default(false)
+  allowCrypto    Boolean  @default(true)
+  allowStocks    Boolean  @default(true)
+  allowOptions   Boolean  @default(false)
+  minSignalScore Int      @default(70)
+  minRrRatio     Decimal  @default(2.0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model DailyCheckin {
+  id               String   @id @default(cuid())
+  userId           String
+  checkinDate      DateTime @default(now())
+  accountSize      Decimal
+  isCalm           Boolean
+  maxLossToday     Decimal
+  hasTime          Boolean
+  tradingReason    String
+  shouldTrade      Boolean
+  aiRecommendation String?
+  aiReasoning      String?
+  aiWarnings       String[] @default([])
+  createdAt        DateTime @default(now())
+}
+
+model MorningBriefing {
+  id             String   @id @default(cuid())
+  userId         String
+  briefingDate   DateTime @default(now())
+  marketBias     String
+  biasReason     String?
+  spyChange      Decimal?
+  qqqChange      Decimal?
+  btcChange      Decimal?
+  ethChange      Decimal?
+  vixLevel       Decimal?
+  volatilityWarn Boolean  @default(false)
+  highImpactNews String[] @default([])
+  noTradeReasons String[] @default([])
+  bestWindow     String?
+  topSetupIds    String[] @default([])
+  fullBriefing   String?
+  createdAt      DateTime @default(now())
+}
+
+model Signal {
+  id              String      @id @default(cuid())
+  userId          String
+  scanDate        DateTime    @default(now())
+  ticker          String
+  marketType      String
+  direction       String
+  scoreTrend      Int?
+  scoreMaAlign    Int?
+  scoreSupRes     Int?
+  scoreVolume     Int?
+  scoreMomentum   Int?
+  scoreRsiMacd    Int?
+  scoreVwap       Int?
+  scoreBreakout   Int?
+  scoreNewsRisk   Int?
+  scoreVolatility Int?
+  scoreRrRatio    Int?
+  totalScore      Int
+  grade           String?
+  aiReasoning     String?
+  shouldSkip      Boolean     @default(false)
+  skipReason      String?
+  TradePlan       TradePlan[]
+  createdAt       DateTime    @default(now())
+}
+
+model TradePlan {
+  id              String         @id @default(cuid())
+  userId          String
+  signalId        String?
+  Signal          Signal?        @relation(fields: [signalId], references: [id])
+  planDate        DateTime       @default(now())
+  action          String
+  ticker          String
+  marketType      String
+  bias            String
+  entryLow        Decimal?
+  entryHigh       Decimal?
+  stopLoss        Decimal
+  takeProfit1     Decimal
+  takeProfit2     Decimal?
+  rrRatio         Decimal
+  accountSize     Decimal
+  riskDollars     Decimal
+  positionSize    Decimal
+  maxDollarRisk   Decimal
+  tradeReason     String
+  invalidation    String
+  confidenceScore Int
+  plainEnglish    String
+  passedRiskCheck Boolean        @default(false)
+  riskViolations  String[]       @default([])
+  userApproved    Boolean?
+  approvedAt      DateTime?
+  JournalEntry    JournalEntry[]
+  createdAt       DateTime       @default(now())
+}
+
+model JournalEntry {
+  id            String     @id @default(cuid())
+  userId        String
+  tradePlanId   String?
+  TradePlan     TradePlan? @relation(fields: [tradePlanId], references: [id])
+  entryDate     DateTime   @default(now())
+  marketType    String
+  ticker        String
+  strategyName  String?
+  entryPrice    Decimal?
+  exitPrice     Decimal?
+  stopLossUsed  Decimal?
+  takeProfitHit String?
+  positionSize  Decimal?
+  pnlDollars    Decimal?
+  pnlPercent    Decimal?
+  setupScore    Int?
+  aiReasoning   String?
+  myReasoning   String?
+  emotionBefore String?
+  mistakeMade   String?
+  lessonLearned String?
+  chartNotes    String?
+  tradeMode     String     @default("paper")
+  followedPlan  Boolean?
+  movedStop     Boolean?
+  chasedEntry   Boolean?
+  revengeTrade  Boolean?
+  createdAt     DateTime   @default(now())
+}
+
+model Strategy {
+  id                String   @id @default(cuid())
+  userId            String
+  strategyName      String
+  sourceNotes       String
+  entryRules        String[] @default([])
+  exitRules         String[] @default([])
+  stopLossRules     String[] @default([])
+  takeProfitRules   String[] @default([])
+  marketConditions  String[] @default([])
+  whenNotToTrade    String[] @default([])
+  timeframes        String[] @default([])
+  indicators        String[] @default([])
+  backtestChecklist String[] @default([])
+  paperChecklist    String[] @default([])
+  skepticismFlags   String[] @default([])
+  aiAssessment      String?
+  paperTrades       Int      @default(0)
+  paperWinRate      Decimal?
+  liveTrades        Int      @default(0)
+  liveWinRate       Decimal?
+  isActive          Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model EodReview {
+  id                 String   @id @default(cuid())
+  userId             String
+  reviewDate         DateTime @default(now())
+  followedPlan       Boolean
+  onlyApprovedTrades Boolean
+  movedStop          Boolean
+  chasedEntries      Boolean
+  revengeTrade       Boolean
+  respectedLossLimit Boolean
+  lessonOfDay        String?
+  tomorrowReduced    Boolean  @default(false)
+  aiAssessment       String?
+  grade              String?
+  tradesToday        Int      @default(0)
+  pnlToday           Decimal  @default(0)
+  createdAt          DateTime @default(now())
+}
+
+model RuleViolation {
+  id              String   @id @default(cuid())
+  userId          String
+  violationDate   DateTime @default(now())
+  ruleName        String
+  ruleDescription String
+  context         String?
+  tradePlanId     String?
+  createdAt       DateTime @default(now())
+}
