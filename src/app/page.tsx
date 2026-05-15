@@ -8,7 +8,7 @@ import Link from 'next/link'
 export default function MorningBriefPage() {
   const briefing = MOCK_BRIEFING
   const signals = MOCK_SIGNALS.filter(s => !s.shouldSkip).slice(0, 3)
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/New_York' })
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
