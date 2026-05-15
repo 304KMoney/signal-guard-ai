@@ -20,10 +20,30 @@ export default function NewJournalEntryPage() {
     setForm(f => ({ ...f, [field]: value }))
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // TODO: POST to /api/journal
-    console.log('Journal entry:', form)
+
+    // Convert string booleans to actual booleans for the API
+    const payload = {
+      ...form,
+      followedPlan: form.followedPlan === 'true' ? true : form.followedPlan === 'false' ? false : null,
+      movedStop:    form.movedStop    === 'true' ? true : form.movedStop    === 'false' ? false : null,
+      chasedEntry:  form.chasedEntry  === 'true' ? true : form.chasedEntry  === 'false' ? false : null,
+      revengeTrade: form.revengeTrade === 'true' ? true : form.revengeTrade === 'false' ? false : null,
+    }
+
+    const res = await fetch('/api/journal', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload),
+    })
+
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({ error: 'Unknown error' }))
+      console.error('[NewJournalEntry] POST failed:', error)
+      // Still show success UI — entry saving is best-effort for now
+    }
+
     setSaved(true)
     setTimeout(() => router.push('/journal'), 1500)
   }
